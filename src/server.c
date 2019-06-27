@@ -131,9 +131,36 @@ void resp_404(int fd)
  */
 void get_file(int fd, struct cache *cache, char *request_path)
 {
-    ///////////////////
-    // IMPLEMENT ME! //
-    ///////////////////
+    char filepath[4096];
+    struct file_data *filedata;
+    struct cache_entry *entry;
+    char *mime_type;
+
+    snprintf(filepath, sizeof filepath, "%s%s", SERVER_ROOT, request_path);
+
+    entry = cache_get(cache, filepath);
+
+    if (entry != NULL)
+    {
+        send_response(fd, "HTTP/1.1 200 FOUND", entry->content_type, entry->content, entry->content_length);
+    }
+    else
+    {
+        filedata = file_load(filepath);
+
+        if (filedata == NULL)
+        {
+            resp_404(fd);
+            return;
+        }
+
+        mime_type = mime_type_get(filepath);
+        printf("mime_type: %s", mime_type);
+
+        send_response(fd, "HTTP/1.1 200 FOUND", mime_type, filedata->data, filedata->size);
+
+        file_free(filedata);
+    }
 }
 
 /**
